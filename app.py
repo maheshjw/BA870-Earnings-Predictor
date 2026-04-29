@@ -199,19 +199,45 @@ with tab_predictor:
                 with c2:
                     st.markdown("#### 📊 Predicted 3-Day CAR")
                     car_std = df_history['car_3day'].std()
+
+                    # Set y-axis range based on the prediction itself,
+                    # not the error bars — otherwise a 0.46% bar on a
+                    # ±10% axis is invisible.
+                    pad = max(abs(car_pred) * 3, 0.02)   # at least ±2%
+                    y_lo = min(car_pred - pad, -pad)
+                    y_hi = max(car_pred + pad,  pad)
+
                     fig_car = go.Figure()
                     fig_car.add_trace(go.Bar(
                         x=[ticker],
                         y=[car_pred],
-                        error_y=dict(type='constant', value=car_std),
+                        # error bars shown as a separate annotation so they
+                        # don't blow out the axis scale
                         marker_color='green' if car_pred > 0 else 'red',
-                        name='Predicted CAR'
+                        width=0.4,
+                        name='Predicted CAR',
+                        text=f"{car_pred:.2%}",
+                        textposition='outside',
+                        textfont=dict(size=14, color='white'),
                     ))
-                    fig_car.add_hline(y=0, line_dash='dash', line_color='black')
+                    # ±1 std dev reference lines (thin, so they don't dominate)
+                    fig_car.add_hline(y=car_std,  line_dash='dot',
+                                      line_color='rgba(150,150,150,0.4)', line_width=1,
+                                      annotation_text=f'+1σ {car_std:.1%}',
+                                      annotation_position='right',
+                                      annotation_font_size=10)
+                    fig_car.add_hline(y=-car_std, line_dash='dot',
+                                      line_color='rgba(150,150,150,0.4)', line_width=1,
+                                      annotation_text=f'-1σ {-car_std:.1%}',
+                                      annotation_position='right',
+                                      annotation_font_size=10)
+                    fig_car.add_hline(y=0, line_dash='dash',
+                                      line_color='gray', line_width=1)
                     fig_car.update_layout(
                         yaxis_title='3-Day Abnormal Return',
+                        yaxis=dict(range=[y_lo, y_hi], tickformat='.1%'),
                         height=300,
-                        yaxis_tickformat='.2%'
+                        showlegend=False,
                     )
                     st.plotly_chart(fig_car, use_container_width=True)
 
