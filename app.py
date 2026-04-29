@@ -373,7 +373,7 @@ with tab_methodology:
     st.divider()
 
     # ── 1. Problem Statement ──────────────────────────────────────────────────
-    st.subheader("1. 🎯 What Problem Are We Solving?")
+    st.subheader("1. What Problem Are We Solving?")
     st.markdown("""
     This app addresses two connected prediction problems in empirical finance:
 
@@ -386,7 +386,7 @@ with tab_methodology:
     st.divider()
 
     # ── 2. 3-Day CAR ──────────────────────────────────────────────────────────
-    st.subheader("2. 📐 What is a 3-Day CAR?")
+    st.subheader("2. What is a 3-Day CAR?")
 
     col_a, col_b = st.columns(2)
     with col_a:
@@ -423,7 +423,7 @@ with tab_methodology:
     st.divider()
 
     # ── 3. Data Pipeline ──────────────────────────────────────────────────────
-    st.subheader("3. 🗄️ Data Pipeline")
+    st.subheader("3. Data Pipeline")
     st.markdown("""
     | # | Source | Period | What it provides |
     |---|--------|--------|-----------------|
@@ -438,7 +438,7 @@ with tab_methodology:
     st.divider()
 
     # ── 4. Features ───────────────────────────────────────────────────────────
-    st.subheader("4. 🔧 Feature Engineering")
+    st.subheader("4. Feature Engineering")
     feat_table = pd.DataFrame({
         'Feature':     ['prior_surprise', 'prior_beat', 'avg_surprise_4q', 'dispersion',
                         'num_analysts', 'prior_car', 'beat_streak', 'log_assets', 'leverage', 'roe'],
@@ -462,7 +462,7 @@ with tab_methodology:
     st.divider()
 
     # ── 5. Models ─────────────────────────────────────────────────────────────
-    st.subheader("5. 🤖 Models & Validation")
+    st.subheader("5. Models & Validation")
     mc1, mc2 = st.columns(2)
     with mc1:
         st.markdown("""
@@ -500,7 +500,7 @@ with tab_methodology:
     st.divider()
 
     # ── 6. Chart Guide ────────────────────────────────────────────────────────
-    st.subheader("6. 📊 How to Read Each Chart")
+    st.subheader("6. How to Read Each Chart")
 
     with st.expander("🎯 Beat/Miss Probability Gauge", expanded=True):
         st.markdown("""
@@ -517,7 +517,7 @@ with tab_methodology:
         **Logistic Regression probability** is shown alongside as a sanity check. When both models agree (both above or both below 50%), the signal is more robust than when they diverge.
         """)
 
-    with st.expander("📊 Predicted 3-Day CAR Bar Chart"):
+    with st.expander(" Predicted 3-Day CAR Bar Chart"):
         st.markdown("""
         **What it shows:** The Random Forest model's point estimate for the cumulative abnormal return over the 3-day window around the next earnings announcement.
 
@@ -530,7 +530,7 @@ with tab_methodology:
         The wide error bars reflect how noisy realized short-window returns are — even a small positive prediction is consistent with a wide range of actual outcomes.
         """)
 
-    with st.expander("📋 Historical Accuracy Scorecard"):
+    with st.expander(" Historical Accuracy Scorecard"):
         st.markdown("""
         **What it shows:** The last 8 quarters of actual earnings outcomes for the selected ticker, drawn from the WRDS IBES + CRSP training dataset.
 
@@ -549,7 +549,7 @@ with tab_methodology:
         A volatile or inconsistent history should lower your confidence in the model's point estimate.
         """)
 
-    with st.expander("🔍 Feature Importance (XGBoost)"):
+    with st.expander(" Feature Importance (XGBoost)"):
         st.markdown("""
         **What it shows:** Each feature's **gain score** — the average improvement in the classification objective (log-loss) when that feature is used in a split, weighted by how often it appears across all trees.
 
@@ -562,7 +562,7 @@ with tab_methodology:
         - **Fundamentals (leverage, ROE, log_assets)** — contribute less individually but provide firm-quality context that modulates the above signals
         """)
 
-    with st.expander("📉 Prior EPS Surprise vs Realized 3-Day CAR Scatter"):
+    with st.expander(" Prior EPS Surprise vs Realized 3-Day CAR Scatter"):
         st.markdown("""
         **What it shows:** A scatter plot of all historical earnings events for the selected ticker. Each dot is one past earnings announcement.
 
@@ -586,7 +586,7 @@ with tab_methodology:
     st.divider()
 
     # ── 7. Sentiment & External Events ───────────────────────────────────────
-    st.subheader("7. 📰 Sentiment, News & External Event Effects on CAR")
+    st.subheader("7. Sentiment, News & External Event Effects on CAR")
     st.markdown("""
     Earnings surprises and stock price reactions don't happen in isolation.
     Several categories of external signals have well-documented effects on both
@@ -598,7 +598,7 @@ with tab_methodology:
 
     with se1:
         st.markdown("""
-        #### A. 📈 The Expectations Treadmill
+        #### A.  The Expectations Treadmill
         Positive pre-earnings media coverage and analyst sentiment in the 30 days before an
         announcement is associated with **upward analyst estimate revisions**.
         When consensus rises, the hurdle for a beat rises too — making outperformance harder.
@@ -613,7 +613,7 @@ with tab_methodology:
 
         ---
 
-        #### B. 🏛️ Macro Event Contamination
+        #### B.  Macro Event Contamination
         Fed rate decisions, CPI prints, geopolitical shocks, and sector-wide regulatory
         announcements occurring **within the 3-day CAR window** can inflate or deflate
         measured abnormal returns independent of earnings quality.
@@ -629,7 +629,7 @@ with tab_methodology:
 
     with se2:
         st.markdown("""
-        #### C. 🎙️ Management Guidance Tone (Earnings Call Effect)
+        #### C.  Management Guidance Tone (Earnings Call Effect)
         Academic research consistently shows that **negative forward guidance issued
         alongside a positive EPS beat** often produces a *negative* CAR — because investors
         price the forward outlook, not the backward-looking quarterly result.
@@ -643,7 +643,7 @@ with tab_methodology:
 
         ---
 
-        #### D. 📉 Short Interest & Options Positioning
+        #### D.  Short Interest & Options Positioning
         Elevated short interest before earnings can **amplify positive CARs** on a beat
         (forced short covering → price spike) and can dampen negative CARs on a miss
         if put buyers close positions rapidly.
@@ -659,7 +659,7 @@ with tab_methodology:
 
     st.divider()
 
-    with st.expander("🔮 Future Extensions"):
+    with st.expander(" Future Extensions"):
         st.markdown("""
         - **NLP guidance tone** — FinBERT scoring of earnings call transcripts to capture forward guidance sentiment
         - **News sentiment score** — Alpha Vantage News API or RavenPack pre-announcement sentiment signal (30-day window)
