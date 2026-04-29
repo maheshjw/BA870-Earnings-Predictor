@@ -68,22 +68,22 @@ def find_ticker_in_history(ticker, df):
 
 # ── Safe yfinance fetch with retries & hard fallbacks ────────────────────────
 def fetch_yfinance_info(ticker):
-    """Returns (info_dict, warning_message_or_None)."""
+    """Returns (info_dict, stock_object, warning_message_or_None)."""
     stock = yf.Ticker(ticker)
     for attempt in range(4):
         try:
             info = stock.info
             # yfinance sometimes returns a nearly-empty dict
             if info and len(info) > 5:
-                return info, None
+                return info, stock, None
         except Exception as e:
             err = str(e)
             if attempt < 3:
                 wait = (attempt + 1) * 6   # 6 s, 12 s, 18 s
                 time.sleep(wait)
             else:
-                return {}, f"Yahoo Finance unavailable ({err[:80]}). Using dataset averages for live features."
-    return {}, "Yahoo Finance returned empty data. Using dataset averages for live features."
+                return {}, stock, f"Yahoo Finance unavailable ({err[:80]}). Using dataset averages for live features."
+    return {}, stock, "Yahoo Finance returned empty data. Using dataset averages for live features."
 
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 st.sidebar.header("🔍 Stock Input")
@@ -124,7 +124,7 @@ with tab_predictor:
         with st.spinner(f'Fetching data for {ticker}...'):
             try:
                 # ── 1. Live data ──────────────────────────────────────────
-                info, yf_warning = fetch_yfinance_info(ticker)
+                info, stock, yf_warning = fetch_yfinance_info(ticker)
                 if yf_warning:
                     st.warning(f"⚠️ {yf_warning}")
 
