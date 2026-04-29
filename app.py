@@ -751,7 +751,7 @@ with tab_methodology:
     st.divider()
 
     # ── Sentiment & External Events ───────────────────────────────────────────
-    st.subheader("📰 Sentiment, News & External Event Effects on CAR")
+    st.subheader(" Sentiment, News & External Event Effects on CAR")
     st.markdown("Four documented external factors that affect both beat probability and CAR magnitude — and are important context for interpreting predictions:")
 
     se1, se2 = st.columns(2)
