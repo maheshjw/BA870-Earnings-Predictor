@@ -410,7 +410,7 @@ with tab_methodology:
     # ══════════════════════════════════════════════════════════════════════════
     # PHASE 1 — DATA COLLECTION
     # ══════════════════════════════════════════════════════════════════════════
-    st.subheader("📦 Phase 1 — Data Collection")
+    st.subheader(" Phase 1 — Data Collection")
 
     p1a, p1b, p1c = st.columns(3)
 
@@ -462,7 +462,7 @@ with tab_methodology:
     # ══════════════════════════════════════════════════════════════════════════
     # PHASE 2 — CLEANING & FEATURE ENGINEERING
     # ══════════════════════════════════════════════════════════════════════════
-    st.subheader("🔧 Phase 2 — Cleaning & Feature Engineering")
+    st.subheader(" Phase 2 — Cleaning & Feature Engineering")
 
     p2a, p2b = st.columns(2)
 
@@ -545,7 +545,7 @@ with tab_methodology:
     # ══════════════════════════════════════════════════════════════════════════
     # PHASE 3 — MODEL TRAINING
     # ══════════════════════════════════════════════════════════════════════════
-    st.subheader("🤖 Phase 3 — Model Training")
+    st.subheader(" Phase 3 — Model Training")
 
     p3a, p3b = st.columns(2)
 
@@ -597,7 +597,7 @@ with tab_methodology:
     # ══════════════════════════════════════════════════════════════════════════
     # PHASE 4 — STREAMLIT APP
     # ══════════════════════════════════════════════════════════════════════════
-    st.subheader("🚀 Phase 4 — Streamlit App")
+    st.subheader(" Phase 4 — Streamlit App")
 
     p4a, p4b = st.columns(2)
 
@@ -653,7 +653,7 @@ with tab_methodology:
     st.divider()
 
     # ── 3-Day CAR Deep Dive ───────────────────────────────────────────────────
-    st.subheader("📐 3-Day CAR — Deep Dive")
+    st.subheader(" 3-Day CAR — Deep Dive")
     d1, d2 = st.columns(2)
     with d1:
         st.markdown("""
@@ -685,9 +685,9 @@ with tab_methodology:
     st.divider()
 
     # ── Chart Guide ───────────────────────────────────────────────────────────
-    st.subheader("📊 Chart Guide")
+    st.subheader(" Chart Guide")
 
-    with st.expander("🎯 Beat/Miss Probability Gauge", expanded=True):
+    with st.expander(" Beat/Miss Probability Gauge", expanded=True):
         st.markdown("""
         XGBoost probability (0–100%) the company will beat analyst EPS consensus at its next announcement.
         - 🟢 **Green (60–100%)** — confident beat signal
@@ -697,7 +697,7 @@ with tab_methodology:
         - **Logistic Regression** shown alongside — agreement between both models = stronger signal
         """)
 
-    with st.expander("📊 Predicted 3-Day CAR Bar Chart"):
+    with st.expander(" Predicted 3-Day CAR Bar Chart"):
         st.markdown("""
         Random Forest point estimate for the 3-day cumulative abnormal return.
         - Green = positive expected abnormal return · Red = negative
@@ -706,7 +706,7 @@ with tab_methodology:
         - Y-axis is scaled to the prediction — not blown out by the ±10% std dev
         """)
 
-    with st.expander("📋 Historical Accuracy Scorecard"):
+    with st.expander(" Historical Accuracy Scorecard"):
         st.markdown("""
         Last 8 quarters of actual earnings outcomes from WRDS IBES + CRSP.
 
@@ -723,7 +723,7 @@ with tab_methodology:
         TSLA, JPM, GOOGL, WMT are not in the dataset — models still run using dataset averages + live yfinance fundamentals.
         """)
 
-    with st.expander("🔍 Feature Importance (XGBoost)"):
+    with st.expander(" Feature Importance (XGBoost)"):
         st.markdown("""
         Each feature's **gain score** — average improvement in classification objective when that feature is used in a split.
         - **beat_streak** — most powerful; consecutive beaters tend to keep beating ("sandbagging" guidance)
@@ -734,7 +734,7 @@ with tab_methodology:
         - **Fundamentals** (log_assets, leverage, roe) — firm-quality context
         """)
 
-    with st.expander("📉 EPS Surprise vs 3-Day CAR Scatter"):
+    with st.expander(" EPS Surprise vs 3-Day CAR Scatter"):
         st.markdown("""
         Each dot = one past earnings event · X = EPS surprise · Y = 3-day CAR · 🟢 beat · 🔴 miss
 
@@ -757,7 +757,7 @@ with tab_methodology:
     se1, se2 = st.columns(2)
     with se1:
         st.markdown("""
-        #### A. 📈 The Expectations Treadmill
+        #### A.  The Expectations Treadmill
         Positive pre-earnings media sentiment in the 30 days before an announcement is associated with
         **upward analyst estimate revisions**. When consensus rises, the beat hurdle rises too —
         explaining why stocks sometimes fall on strong earnings.
@@ -766,7 +766,7 @@ with tab_methodology:
 
         ---
 
-        #### B. 🏛️ Macro Event Contamination
+        #### B.  Macro Event Contamination
         Fed decisions, CPI prints, and geopolitical shocks within the **3-day CAR window**
         inflate/deflate measured abnormal returns independent of earnings.
         The market-model beta-adjustment removes market-wide moves but not idiosyncratic sector shocks.
@@ -775,7 +775,7 @@ with tab_methodology:
         """)
     with se2:
         st.markdown("""
-        #### C. 🎙️ Management Guidance Tone
+        #### C.  Management Guidance Tone
         **Negative forward guidance alongside a positive EPS beat** often produces a negative CAR —
         investors price the *outlook*, not the past quarter.
         A miss + strong guidance can produce a positive CAR.
@@ -785,7 +785,7 @@ with tab_methodology:
 
         ---
 
-        #### D. 📉 Short Interest & IV Crush
+        #### D.  Short Interest & IV Crush
         High short interest amplifies positive CARs on beats (short squeeze).
         High pre-earnings implied volatility (IV) often collapses after the announcement
         — the realized CAR is smaller than the implied move (IV crush), especially for mega-caps.
@@ -794,7 +794,7 @@ with tab_methodology:
         """)
 
     st.divider()
-    with st.expander("🔮 Future Extensions"):
+    with st.expander(" Future Extensions"):
         st.markdown("""
         - **FinBERT guidance tone** — score earnings call transcripts for forward guidance sentiment
         - **Pre-announcement news sentiment** — Alpha Vantage News API or RavenPack 30-day signal
