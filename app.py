@@ -987,7 +987,7 @@ with tab_methodology:
     sb1, sb2 = st.columns(2)
 
     with sb1:
-        st.markdown("### 📡 TextBlob — News Sentiment")
+        st.markdown("###  TextBlob — News Sentiment")
         st.markdown("""
         **Approach:** Dictionary-based word lookup. No neural network, no training required.
 
@@ -1056,7 +1056,7 @@ with tab_methodology:
     # ════════════════════════════════════════════════════════════════════════
     # CHART GUIDE
     # ════════════════════════════════════════════════════════════════════════
-    st.subheader("📊 Chart Guide")
+    st.subheader(" Chart Guide")
 
     with st.expander(" Beat/Miss Probability Gauge", expanded=True):
         g1, g2, g3 = st.columns(3)
@@ -1069,7 +1069,7 @@ with tab_methodology:
         Both XGBoost and Logistic Regression shown — when both agree, the signal is stronger.
         """)
 
-    with st.expander("📊 Predicted 3-Day CAR Bar Chart"):
+    with st.expander(" Predicted 3-Day CAR Bar Chart"):
         st.markdown("""
         - **Green bar** = positive predicted abnormal return · **Red** = negative
         - Value label always printed on bar regardless of how small it is
