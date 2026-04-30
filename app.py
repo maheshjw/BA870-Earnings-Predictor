@@ -647,7 +647,7 @@ with tab_methodology:
     # ════════════════════════════════════════════════════════════════════════
     # PHASE 1
     # ════════════════════════════════════════════════════════════════════════
-    st.subheader("📦 Phase 1 — Data Collection")
+    st.subheader(" Phase 1 — Data Collection")
 
     p1a, p1b, p1c = st.columns(3)
 
@@ -706,7 +706,7 @@ with tab_methodology:
     # ════════════════════════════════════════════════════════════════════════
     # PHASE 2
     # ════════════════════════════════════════════════════════════════════════
-    st.subheader("🔧 Phase 2 — Cleaning & Feature Engineering")
+    st.subheader(" Phase 2 — Cleaning & Feature Engineering")
 
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("CRSP–IBES Linked",  "591,466", delta="via htsymbol → oftic")
@@ -821,7 +821,7 @@ with tab_methodology:
     # ════════════════════════════════════════════════════════════════════════
     # PHASE 3
     # ════════════════════════════════════════════════════════════════════════
-    st.subheader("🤖 Phase 3 — Model Training")
+    st.subheader(" Phase 3 — Model Training")
 
     st.markdown("#### Train / Test Split — time-based to prevent look-ahead bias")
     sp1, sp2, sp3 = st.columns(3)
@@ -878,7 +878,7 @@ with tab_methodology:
     # ════════════════════════════════════════════════════════════════════════
     # PHASE 4
     # ════════════════════════════════════════════════════════════════════════
-    st.subheader("🚀 Phase 4 — Streamlit App")
+    st.subheader(" Phase 4 — Streamlit App")
 
     ap1, ap2 = st.columns(2)
 
@@ -930,7 +930,7 @@ with tab_methodology:
     # ════════════════════════════════════════════════════════════════════════
     # 3-DAY CAR DEEP DIVE
     # ════════════════════════════════════════════════════════════════════════
-    st.subheader("📐 3-Day CAR — How It's Computed")
+    st.subheader(" 3-Day CAR — How It's Computed")
 
     cd1, cd2 = st.columns(2)
     with cd1:
@@ -981,7 +981,7 @@ with tab_methodology:
     # ════════════════════════════════════════════════════════════════════════
     # SENTIMENT ANALYSIS
     # ════════════════════════════════════════════════════════════════════════
-    st.subheader("📰 Sentiment Analysis — How It Works")
+    st.subheader(" Sentiment Analysis — How It Works")
     st.markdown("Two models run in parallel on the same text — recent yfinance news headlines + company business description.")
 
     sb1, sb2 = st.columns(2)
@@ -1013,7 +1013,7 @@ with tab_methodology:
         """)
 
     with sb2:
-        st.markdown("### 🤖 FinBERT — Earnings Tone")
+        st.markdown("###  FinBERT — Earnings Tone")
         st.markdown("""
         **Approach:** BERT neural network fine-tuned specifically on financial text.
         Understands finance jargon that confuses general-purpose models.
@@ -1058,7 +1058,7 @@ with tab_methodology:
     # ════════════════════════════════════════════════════════════════════════
     st.subheader("📊 Chart Guide")
 
-    with st.expander("🎯 Beat/Miss Probability Gauge", expanded=True):
+    with st.expander(" Beat/Miss Probability Gauge", expanded=True):
         g1, g2, g3 = st.columns(3)
         g1.metric("🟢 Green zone",  "60–100%", delta="Confident beat")
         g2.metric("🟡 Yellow zone", "40–60%",  delta="Uncertain")
@@ -1077,7 +1077,7 @@ with tab_methodology:
         - Y-axis clamped to 3× predicted value so a 0.46% prediction doesn't disappear on a ±10% axis
         """)
 
-    with st.expander("📋 Historical Accuracy Scorecard"):
+    with st.expander(" Historical Accuracy Scorecard"):
         st.markdown("""
         Last **8 quarters** of actual outcomes from WRDS IBES + CRSP for the selected ticker.
 
@@ -1092,7 +1092,7 @@ with tab_methodology:
         """)
         st.info("Only available for the 1,894 tickers in the WRDS dataset. TSLA, JPM, GOOGL, WMT not included — models still run using dataset averages + live yfinance fundamentals.")
 
-    with st.expander("🔍 Feature Importance (XGBoost)"):
+    with st.expander(" Feature Importance (XGBoost)"):
         st.markdown("""
         Each feature's **gain score** = average improvement in log-loss when that feature is used in a split, weighted by frequency.
 
@@ -1106,7 +1106,7 @@ with tab_methodology:
         | 6–10 | Fundamentals | `log_assets`, `leverage`, `roe`, `prior_car`, `prior_beat` |
         """)
 
-    with st.expander("📉 EPS Surprise vs 3-Day CAR Scatter"):
+    with st.expander(" EPS Surprise vs 3-Day CAR Scatter"):
         st.markdown("""
         Each dot = one past earnings event · X = EPS surprise · Y = 3-day CAR · 🟢 beat · 🔴 miss
 
@@ -1120,7 +1120,7 @@ with tab_methodology:
         | Bottom-right ↘ | + | − | Beat but fell — "buy the rumor, sell the news" |
         """)
 
-    with st.expander("📡 News Sentiment (TextBlob)"):
+    with st.expander(" News Sentiment (TextBlob)"):
         st.markdown("""
         - One bar per headline, height = polarity score (−1 to +1)
         - Green = positive (> +0.1) · Yellow = neutral · Red = negative (< −0.1)
@@ -1128,7 +1128,7 @@ with tab_methodology:
         - Average score > +0.05 → Bullish signal · < −0.05 → Bearish signal
         """)
 
-    with st.expander("🤖 Earnings Tone (FinBERT)"):
+    with st.expander(" Earnings Tone (FinBERT)"):
         st.markdown("""
         - Scores the same news headlines + first 5 sentences of the company business description
         - Stacked bar = full 100% split between Positive / Neutral / Negative
