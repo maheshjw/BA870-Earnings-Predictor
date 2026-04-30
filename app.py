@@ -621,409 +621,251 @@ with tab_predictor:
 # ═══════════════════════════════════════════════════════════════════════════════
 # TAB 2 — METHODOLOGY
 # ═══════════════════════════════════════════════════════════════════════════════
+# ═══════════════════════════════════════════════════════════════════════════════
+# TAB 2 — METHODOLOGY
+# ═══════════════════════════════════════════════════════════════════════════════
 with tab_methodology:
 
     st.header("📖 Methodology")
-    st.markdown("*Complete walkthrough of every phase — how the data was collected, cleaned, modelled, deployed, and how sentiment analysis works.*")
+    st.markdown("*Full walkthrough of every phase — data, cleaning, features, models, and the live app. All numbers are from our actual code output.*")
     st.divider()
 
-    # ── OVERVIEW METRICS ──────────────────────────────────────────────────────
-    o1, o2, o3, o4, o5 = st.columns(5)
-    o1.metric("Raw IBES Rows",    "1.67M",   delta="Phase 1")
-    o2.metric("Raw CRSP Rows",    "67.5M",   delta="Phase 1")
-    o3.metric("Final Dataset",    "52,891",  delta="Phase 2")
-    o4.metric("XGBoost AUC",      "0.713",   delta="Phase 3")
-    o5.metric("Visual Components","6 + 2",   delta="Phase 4 + Sentiment")
-
-    st.divider()
-
-    # ════════════════════════════════════════════════════════════════════════
-    # PHASE 1
-    # ════════════════════════════════════════════════════════════════════════
+    # ── PHASE 1 ───────────────────────────────────────────────────────────────
     st.subheader("📦 Phase 1 — Data Collection")
 
+    r1, r2, r3 = st.columns(3)
+    r1.metric("IBES Rows Downloaded",  "1,670,000",  delta="WRDS analyst EPS estimates")
+    r2.metric("CRSP Rows Downloaded",  "67,500,000", delta="WRDS daily stock returns")
+    r3.metric("Compustat Rows",        "443,000",    delta="Annual firm fundamentals")
+
+    st.markdown("")
     p1a, p1b, p1c = st.columns(3)
-
     with p1a:
-        st.markdown("#### IBES (WRDS)")
-        st.metric("Rows Downloaded", "1,670,000", delta="Analyst EPS estimates 1990–2024")
-        st.markdown("Each row = one consensus estimate for one company for one quarter.")
-        st.code(
-            "ticker       — stock symbol\n"
-            "meanest      — consensus EPS estimate\n"
-            "actual       — reported EPS\n"
-            "anndats_act  — announcement date",
-            language=None
-        )
-
+        st.markdown("**IBES — Key columns:**")
+        st.code("ticker       — stock symbol\nmeanest      — consensus EPS\nactual       — reported EPS\nanndats_act  — announcement date", language=None)
     with p1b:
-        st.markdown("#### CRSP (WRDS)")
-        st.metric("Rows Downloaded", "67,500,000", delta="Daily stock returns 1990–2024")
-        st.markdown("Filtered to IBES tickers only to reduce size. S&P 500 returns added via yfinance `^GSPC`.")
-        st.code(
-            "permno  — CRSP unique stock ID\n"
-            "date    — trading date\n"
-            "ret     — daily stock return\n"
-            "vwretd  — market return (S&P 500)",
-            language=None
-        )
-
+        st.markdown("**CRSP — Key columns:**")
+        st.code("permno  — CRSP stock ID\ndate    — trading date\nret     — daily return\nvwretd  — S&P500 return (yfinance ^GSPC)", language=None)
     with p1c:
-        st.markdown("#### Compustat (WRDS)")
-        st.metric("Rows Downloaded", "443,000", delta="Annual firm fundamentals")
-        st.markdown("Used as control variables — size, leverage, profitability.")
-        st.code(
-            "at    — total assets\n"
-            "dltt  — long-term debt\n"
-            "ceq   — common equity\n"
-            "ni    — net income",
-            language=None
-        )
+        st.markdown("**Compustat — Key columns:**")
+        st.code("at    — total assets\ndltt  — long-term debt\nceq   — common equity\nni    — net income", language=None)
 
     st.divider()
 
-    # ════════════════════════════════════════════════════════════════════════
-    # PHASE 2
-    # ════════════════════════════════════════════════════════════════════════
+    # ── PHASE 2 ───────────────────────────────────────────────────────────────
     st.subheader("🔧 Phase 2 — Cleaning & Feature Engineering")
 
     c1, c2, c3, c4 = st.columns(4)
-    c1.metric("CRSP–IBES Linked",   "591,000",  delta="via oftic ticker")
-    c2.metric("CAR Computed On",    "110,000",  delta="announcement events")
-    c3.metric("Compustat Match",    "67.5%",    delta="oftic + fiscal year")
-    c4.metric("Final Dataset",      "52,891",   delta="rows · 1,894 tickers")
+    c1.metric("CRSP-IBES Rows Linked", "591,000",  delta="via oftic ticker match")
+    c2.metric("CAR Computed On",       "110,000",  delta="announcement events")
+    c3.metric("Compustat Match Rate",  "67.5%",    delta="oftic + fiscal year")
+    c4.metric("Final Dataset",         "52,891",   delta="rows · 1,894 tickers")
 
     st.markdown("")
-    ph2a, ph2b = st.columns(2)
+    p2a, p2b = st.columns(2)
 
-    with ph2a:
-        st.markdown("#### IBES Cleaning")
+    with p2a:
+        st.markdown("#### IBES Cleaning Steps")
         st.markdown("""
-1. Remove rows with missing `actual` or `meanest`
-2. Keep only quarterly forecasts — `fpi = 6`
-3. Keep only the **most recent** estimate before each announcement
-4. Compute EPS Surprise:
+1. Removed rows with missing `actual` or `meanest`
+2. Kept only quarterly forecasts — `fpi = 6`
+3. Kept only the **most recent estimate** before each announcement date
+4. Computed EPS Surprise:
         """)
         st.code("Surprise = (Actual - Consensus) / |Consensus|", language=None)
         st.markdown("5. Beat/Miss label: `1` if actual >= consensus, else `0`")
 
-        st.markdown("#### CRSP–IBES Link")
-        la, lb = st.columns(2)
-        la.metric("Rows Linked", "591,000")
-        lb.metric("Method", "oftic join")
+        st.markdown("#### CRSP-IBES Link")
+        ca, cb = st.columns(2)
+        ca.metric("Rows Linked", "591,000")
+        cb.metric("Method", "oftic join")
 
         st.markdown("#### Compustat Merge")
-        ma, mb = st.columns(2)
-        ma.metric("Match Rate", "67.5%")
-        mb.metric("Unmatched", "→ dataset avg")
+        st.markdown("Calculated `log_assets`, `leverage` (debt/equity), `roe` (NI/equity). Matched via `oftic` + fiscal year.")
+        cm1, cm2 = st.columns(2)
+        cm1.metric("Match Rate", "67.5%")
+        cm2.metric("Unmatched rows", "use dataset avg")
 
-    with ph2b:
+    with p2b:
         st.markdown("#### 3-Day CAR Computation")
         st.markdown("""
 For **each earnings announcement:**
-1. Get **200 days** of returns before the event — estimation window
-2. Run OLS regression: `R_stock = alpha + beta × R_market`
-3. Compute **expected return** each day using alpha + beta
-4. **Abnormal return** = actual return − expected return
-5. Sum over days **−1, 0, +1**
+1. Get **200 days** of returns before the event (estimation window)
+2. Run OLS: `R_stock = alpha + beta x R_market`
+3. Compute expected return each day
+4. Abnormal return = actual - expected
+5. Sum over days -1, 0, +1
         """)
-        st.code(
-            "AR_t = R_stock_t - (alpha + beta x R_market_t)\n"
-            "CAR  = AR_-1  +  AR_0  +  AR_+1",
-            language=None
-        )
-        ca, cb, cc = st.columns(3)
-        ca.metric("Rows Processed",   "110,000")
-        cb.metric("Checkpoint Every", "10,000 rows")
-        cc.metric("Avg CAR",          "0.11%", delta="sensible ✓")
+        st.code("AR_t = R_stock_t - (alpha + beta x R_market_t)\nCAR  = AR_-1 + AR_0 + AR_+1", language=None)
 
-        st.markdown("#### 10 Features Built")
-        feat_df = pd.DataFrame({
-            'Feature': ['prior_surprise','prior_beat','avg_surprise_4q',
-                        'dispersion','num_analysts','prior_car','beat_streak',
-                        'log_assets','leverage','roe'],
-            'Source':  ['IBES','IBES','IBES','IBES','IBES',
-                        'CRSP','IBES','Compustat','Compustat','Compustat'],
-            'Measures':["Last Q EPS surprise","Beat last Q? (0/1)",
-                        "Avg surprise last 4Q","Analyst disagreement",
-                        "# analysts","Prior Q 3-day CAR",
-                        "Consecutive beats (0–4)","Log total assets",
-                        "Debt/equity ÷ 100","Return on equity"],
+        car1, car2, car3 = st.columns(3)
+        car1.metric("Rows Processed", "110,000")
+        car2.metric("Checkpoint Every", "10,000 rows")
+        car3.metric("Avg CAR Result", "0.11%", delta="financially sensible")
+
+        st.markdown("#### Feature Engineering — 10 Features")
+        feat_table = pd.DataFrame({
+            'Feature':         ['prior_surprise','prior_beat','avg_surprise_4q',
+                                'dispersion','num_analysts','prior_car','beat_streak',
+                                'log_assets','leverage','roe'],
+            'Source':          ['IBES','IBES','IBES','IBES','IBES','CRSP','IBES',
+                                'Compustat','Compustat','Compustat'],
+            'What it measures':["Last Q EPS surprise",
+                                "Beat last quarter? (0/1)",
+                                "Avg surprise last 4 quarters",
+                                "Analyst disagreement (std dev)",
+                                "# analysts covering stock",
+                                "Prior quarter 3-day CAR",
+                                "Consecutive beats (0-4)",
+                                "Firm size (log total assets)",
+                                "Debt-to-equity / 100",
+                                "Return on equity"],
         })
-        st.dataframe(feat_df, use_container_width=True, hide_index=True)
-        fa, fb, fc = st.columns(3)
-        fa.metric("Final Rows", "52,891")
-        fb.metric("Tickers",    "1,894")
-        fc.metric("Period",     "1990–2024")
+        st.dataframe(feat_table, use_container_width=True, hide_index=True)
+
+        fd1, fd2, fd3 = st.columns(3)
+        fd1.metric("Final Rows", "52,891")
+        fd2.metric("Tickers", "1,894")
+        fd3.metric("Period", "1990-2024")
 
     st.divider()
 
-    # ════════════════════════════════════════════════════════════════════════
-    # PHASE 3
-    # ════════════════════════════════════════════════════════════════════════
+    # ── PHASE 3 ───────────────────────────────────────────────────────────────
     st.subheader("🤖 Phase 3 — Model Training")
 
-    st.markdown("#### Train / Test Split — time-based, no look-ahead bias")
-    s1, s2, s3 = st.columns(3)
-    s1.metric("Train Set",  "33,121 rows", delta="Pre-2019")
-    s2.metric("Test Set",   "19,770 rows", delta="2019–2024")
-    s3.metric("Split Type", "Temporal",    delta="Future never in train ✓")
+    st.markdown("#### Train / Test Split — time-based to prevent look-ahead bias")
+    sp1, sp2, sp3 = st.columns(3)
+    sp1.metric("Train Set", "33,121 rows", delta="Pre-2019")
+    sp2.metric("Test Set",  "19,770 rows", delta="2019-2024")
+    sp3.metric("Split Rule","Temporal",    delta="No future data in train")
 
     st.markdown("")
-    m1, m2 = st.columns(2)
+    m1col, m2col = st.columns(2)
 
-    with m1:
+    with m1col:
         st.markdown("#### Classification — Beat vs. Miss")
         cl1, cl2, cl3, cl4 = st.columns(4)
-        cl1.metric("LR Accuracy",  "68.5%")
-        cl2.metric("LR AUC",       "0.701")
-        cl3.metric("XGB Accuracy", "68.4%")
-        cl4.metric("XGB AUC",      "0.713", delta="Primary ✓")
-        st.markdown("""
-**AUC = 0.713** — XGBoost correctly ranks a true beat above a true miss **71.3%** of the time.
-Both models beat random guessing (AUC = 0.50) significantly.
+        cl1.metric("Logistic Reg Accuracy", "68.5%")
+        cl2.metric("Logistic Reg AUC",      "0.701")
+        cl3.metric("XGBoost Accuracy",      "68.4%")
+        cl4.metric("XGBoost AUC",           "0.713", delta="Primary model")
+        st.markdown("AUC = 0.713 → XGBoost correctly ranks a true beat above a true miss **71.3%** of the time. Both beat random guessing (AUC = 0.50).")
 
-- **Logistic Regression** — interpretable L2-regularised baseline
-- **XGBoost** — gradient-boosted ensemble, handles non-linear interactions natively
-        """)
-
-    with m2:
+    with m2col:
         st.markdown("#### Regression — Predict 3-Day CAR")
-        r1, r2 = st.columns(2)
-        r1.metric("OLS RMSE",          "0.1179")
-        r2.metric("Random Forest RMSE","0.1180")
-        st.markdown("""
-RMSE is modest — 3-day abnormal returns are inherently noisy.
-Models capture the **systematic** component, not idiosyncratic noise.
-
-- **OLS** — linear baseline, interpretable coefficients
-- **Random Forest** — 200 trees, max depth 6, captures non-linear surprise-to-return mapping
-        """)
+        rg1, rg2 = st.columns(2)
+        rg1.metric("OLS RMSE",            "0.1179")
+        rg2.metric("Random Forest RMSE",  "0.1180")
+        st.markdown("RMSE is intentionally modest — 3-day abnormal returns are noisy. Models capture the **systematic** component, not idiosyncratic noise.")
 
     st.divider()
 
-    # ════════════════════════════════════════════════════════════════════════
-    # PHASE 4
-    # ════════════════════════════════════════════════════════════════════════
+    # ── PHASE 4 ───────────────────────────────────────────────────────────────
     st.subheader("🚀 Phase 4 — Streamlit App")
 
     ap1, ap2 = st.columns(2)
 
     with ap1:
-        st.markdown("#### Live Prediction Flow")
+        st.markdown("#### Live Data Flow")
         st.markdown("""
 1. User enters ticker → **yfinance API** called live
 2. Fetches: `totalAssets`, `debtToEquity`, `returnOnEquity`, `numberOfAnalystOpinions`
 3. Historical WRDS dataset queried for prior earnings signals
-4. **10-feature vector** assembled from live + historical data
-5. **XGBoost** → beat/miss probability (0–100%)
+4. **10-feature vector** built from live + historical data
+5. **XGBoost** → beat/miss probability (0-100%)
 6. **Random Forest** → predicted 3-day CAR (%)
-7. **TextBlob + FinBERT** → news sentiment + earnings tone
         """)
-        d1, d2 = st.columns(2)
-        d1.metric("Code", "GitHub", delta="maheshjw/BA870-Earnings-Predictor")
-        d2.metric("Host", "Streamlit Cloud", delta="Live · no install needed")
+        app1, app2 = st.columns(2)
+        app1.metric("Code", "GitHub", delta="maheshjw/BA870-Earnings-Predictor")
+        app2.metric("Live App", "Streamlit Cloud", delta="No install needed")
 
     with ap2:
-        st.markdown("#### Visual Output — 8 Components")
-        comp_df = pd.DataFrame({
-            '#': [1,2,3,4,5,6,7,8],
-            'Component': [
-                'Beat/Miss Probability Gauge',
-                'Predicted 3-Day CAR Bar Chart',
-                'Top Metrics Row (3 KPIs)',
-                'Historical Accuracy Scorecard',
-                'Feature Importance (XGBoost)',
-                'EPS Surprise vs CAR Scatter',
-                'News Sentiment (TextBlob)',
-                'Earnings Tone (FinBERT)',
-            ],
-            'What it shows': [
-                'XGBoost beat probability 0–100%, color-coded',
-                'Predicted abnormal return + ±1σ reference lines',
-                'Beat prob (XGB), CAR, Beat prob (LR)',
-                'Last 8 quarters: EPS, surprise, beat/miss, CAR',
-                'XGBoost gain scores for all 10 features',
-                'Prior surprise vs realized CAR · ★ = current prediction',
-                'Polarity score per headline, avg score, counts',
-                'Positive/Neutral/Negative % across headlines + company text',
-            ],
-        })
-        st.dataframe(comp_df, use_container_width=True, hide_index=True)
+        st.markdown("#### 6 Visual Components")
+        st.markdown("""
+| # | Visual | What it shows |
+|---|--------|---------------|
+| 1 | **Beat/Miss Gauge** | XGBoost probability 0-100%, color-coded |
+| 2 | **CAR Bar Chart** | Predicted 3-day abnormal return + 1-sigma lines |
+| 3 | **Top Metrics Row** | Beat prob (XGB), CAR, Beat prob (LR) |
+| 4 | **Historical Scorecard** | Last 8 quarters: EPS, surprise, beat/miss, CAR |
+| 5 | **Feature Importance** | XGBoost gain scores for all 10 features |
+| 6 | **Scatter Plot** | Prior surprise vs realized CAR, star = current prediction |
+        """)
 
     st.divider()
 
-    # ════════════════════════════════════════════════════════════════════════
-    # 3-DAY CAR DEEP DIVE
-    # ════════════════════════════════════════════════════════════════════════
-    st.subheader("📐 3-Day CAR — How It's Computed")
+    # ── 3-DAY CAR DEEP DIVE ───────────────────────────────────────────────────
+    st.subheader("📐 3-Day CAR — Deep Dive")
 
-    car1, car2 = st.columns(2)
-    with car1:
-        st.markdown("**Step 1 — Market model OLS (200-day estimation window):**")
-        st.code("R_stock = alpha + beta × R_market + error", language=None)
-        st.markdown("**Step 2 — Daily abnormal return on each event day:**")
-        st.code("AR_t = R_stock_t − (alpha + beta × R_market_t)", language=None)
-        st.markdown("**Step 3 — Sum over 3-day window:**")
-        st.code("CAR(−1, +1) = AR_-1 + AR_0 + AR_+1", language=None)
+    cd1, cd2 = st.columns(2)
+    with cd1:
+        st.markdown("**Market model OLS (200-day estimation window):**")
+        st.code("R_stock = alpha + beta x R_market + e", language=None)
+        st.markdown("**Daily abnormal return:**")
+        st.code("AR_t = R_stock_t - (alpha + beta x R_market_t)", language=None)
+        st.markdown("**3-day cumulative sum:**")
+        st.code("CAR(-1,+1) = AR_-1 + AR_0 + AR_+1", language=None)
         st.markdown("""
 | Day | Why included |
-|-----|-------------|
-| **−1** | Pre-announcement leakage via options, whispers |
+|-----|--------------|
+| **-1** | Leakage via pre-announcements, options, whispers |
 | **0** | Official announcement — primary price discovery |
-| **+1** | Analyst revisions + earnings call processing |
+| **+1** | Analyst revisions + earnings call commentary |
         """)
 
-    with car2:
+    with cd2:
         st.markdown("""
 | CAR Value | Meaning |
 |-----------|---------|
 | **+5%** | Stock returned 5% more than market model predicted |
-| **−3%** | Underperformed expected return by 3% |
-| **≈ 0%** | Announcement already fully priced in |
+| **-3%** | Underperformed expected return by 3% |
+| **~0%** | Announcement fully priced in — no surprise |
         """)
-        cv1, cv2 = st.columns(2)
-        cv1.metric("Avg CAR in Dataset", "0.11%",  delta="from 110K events")
-        cv2.metric("CAR Std Dev",        "~11.8%", delta="wide outcome range")
-        st.info("Predicted CARs are small (often < 1%) because the model predicts the *expected* abnormal return. For consistently-beating stocks like AAPL (75.7% hit rate), surprises are partially anticipated — the systematic component is small. The ±1σ lines on the chart show the true width of outcomes.")
+        cav1, cav2 = st.columns(2)
+        cav1.metric("Avg CAR in Dataset", "0.11%",  delta="from 110K events")
+        cav2.metric("CAR Std Dev",        "~11.8%", delta="wide outcome distribution")
+        st.markdown("""
+**Why predicted CARs are small (often < 1%):**
+The model predicts the *expected* abnormal return.
+For consistently-beating stocks like AAPL (75.7% hit rate),
+the surprise is partially anticipated — systematic component is small.
+The 1-sigma reference lines on the chart show actual outcomes are much wider.
+        """)
 
     st.divider()
 
-    # ════════════════════════════════════════════════════════════════════════
-    # SENTIMENT ANALYSIS — HOW IT WORKS
-    # ════════════════════════════════════════════════════════════════════════
-    st.subheader("📰 Sentiment Analysis — How It Works")
-
-    st.markdown("""
-    Two models run in parallel on the same text — recent news headlines + company description from yfinance.
-    They use fundamentally different approaches.
-    """)
-
-    tb_col, fb_col = st.columns(2)
-
-    with tb_col:
-        st.markdown("### 📡 TextBlob — News Sentiment")
-        st.markdown("**Approach:** Dictionary-based word lookup. No neural network.")
-
-        st.markdown("**How the score is calculated:**")
-        st.markdown("""
-1. Tokenize the headline into words
-2. Look up each word in the PatternSentiment lexicon
-3. Average the non-zero polarity scores
-4. Apply negation modifiers ("not good" → flips sign)
-        """)
-        st.code(
-            'Headline: "Apple beats earnings expectations"\n'
-            '\n'
-            '"beats"        → +0.25\n'
-            '"earnings"     →  0.00\n'
-            '"expectations" →  0.00\n'
-            '"Apple"        →  0.00\n'
-            '─────────────────────\n'
-            'avg polarity   = +0.05  →  Neutral',
-            language=None
-        )
-
-        st.markdown("**Output range:**")
-        tbs1, tbs2, tbs3 = st.columns(3)
-        tbs1.metric("Positive",  "> +0.1")
-        tbs2.metric("Neutral",   "−0.1 to +0.1")
-        tbs3.metric("Negative",  "< −0.1")
-
-        st.markdown("**Weakness in finance:**")
-        st.code(
-            '"Earnings miss"   → TextBlob: Neutral  ❌\n'
-            '"Strong guidance" → TextBlob: Positive ❌ (ignores context)\n'
-            '"Headwinds ahead" → TextBlob: Neutral  ❌',
-            language=None
-        )
-        st.caption("TextBlob has no financial context — built for general English.")
-
-    with fb_col:
-        st.markdown("### 🤖 FinBERT — Earnings Tone")
-        st.markdown("**Approach:** BERT neural network fine-tuned on financial text.")
-
-        st.markdown("**What it was trained on:**")
-        fb_t1, fb_t2 = st.columns(2)
-        fb_t1.metric("Financial News Sentences", "4,840", delta="Reuters + Bloomberg")
-        fb_t2.metric("Analyst Report Sentences", "10,000", delta="Hand-labeled by experts")
-
-        st.markdown("**How confidence is calculated:**")
-        st.markdown("""
-1. Tokenize into subword pieces: `earn → earn + ##ings`
-2. Add `[CLS]` token — its final vector represents the whole sentence
-3. Pass through **12 transformer layers** — self-attention lets every word look at every other word
-4. Final linear layer produces 3 raw scores (logits)
-5. **Softmax** converts logits to probabilities that sum to 100%
-        """)
-        st.code(
-            "logits:  positive=2.84, neutral=0.31, negative=-1.20\n"
-            "\n"
-            "softmax → positive: 82%   ← this is the confidence\n"
-            "          neutral:  14%\n"
-            "          negative:  4%\n"
-            "          ─────────────\n"
-            "          total:   100%",
-            language=None
-        )
-
-        st.markdown("**What confidence means:**")
-        conf_df = pd.DataFrame({
-            'Confidence': ['>80%', '50–80%', '<50%', '~33%'],
-            'Meaning':    [
-                'Model is very sure — trust the label',
-                'Reasonably confident — likely correct',
-                'Borderline — sentence is genuinely ambiguous',
-                'No idea — all three labels equally likely',
-            ]
-        })
-        st.dataframe(conf_df, use_container_width=True, hide_index=True)
-
-        st.markdown("**Why FinBERT beats TextBlob for finance:**")
-        st.code(
-            'Headline: "Apple misses revenue despite strong iPhone sales"\n'
-            '\n'
-            'TextBlob: +0.15 Positive ❌  (sees "strong", ignores "misses")\n'
-            'FinBERT:  Negative 71%   ✅  (understands full context)',
-            language=None
-        )
-
-    st.divider()
-
-    # ════════════════════════════════════════════════════════════════════════
-    # CHART GUIDE
-    # ════════════════════════════════════════════════════════════════════════
+    # ── CHART GUIDE ───────────────────────────────────────────────────────────
     st.subheader("📊 Chart Guide")
 
     with st.expander("🎯 Beat/Miss Probability Gauge", expanded=True):
         g1, g2, g3 = st.columns(3)
-        g1.metric("Green zone", "60–100%", delta="Confident beat")
-        g2.metric("Yellow zone","40–60%",  delta="Uncertain")
-        g3.metric("Red zone",   "0–40%",   delta="Leans miss")
-        st.markdown("Delta = distance from 50% decision boundary. Both XGBoost and Logistic Regression shown — agreement between both = stronger signal.")
+        g1.metric("Green zone", "60-100%", delta="Confident beat")
+        g2.metric("Yellow zone", "40-60%", delta="Uncertain")
+        g3.metric("Red zone",    "0-40%",  delta="Leans miss")
+        st.markdown("Delta = distance from the 50% decision boundary. Both XGBoost and Logistic Regression shown — agreement strengthens the signal.")
 
     with st.expander("📊 Predicted 3-Day CAR Bar Chart"):
         st.markdown("""
-- Green = positive predicted abnormal return · Red = negative
+- **Green** = positive predicted abnormal return · **Red** = negative
 - Value label always printed on bar regardless of size
-- **±1σ dotted lines** = historical spread of realized CARs (reference band, not prediction interval)
-- Y-axis clamped to 3× predicted value — never blown out by the 11.8% std dev
+- **+/-1 sigma dotted lines** = historical spread of realized CARs (reference band)
+- Y-axis clamped to 3x predicted value — not blown out by the 11.8% std dev
         """)
 
     with st.expander("📋 Historical Accuracy Scorecard"):
         st.markdown("""
-Last **8 quarters** of actual IBES + CRSP outcomes for the selected ticker.
+Last **8 quarters** of actual IBES + CRSP outcomes.
 
 | Column | Source | Meaning |
 |--------|--------|---------|
 | Date | IBES `anndats_act` | Earnings announcement date |
 | Consensus EPS | IBES `meanest` | Mean analyst estimate |
 | Actual EPS | IBES `actual` | Reported EPS |
-| Surprise | Computed | (Actual − Consensus) / |Consensus| |
-| Beat | Computed | ✅ beat · ❌ missed |
-| 3-Day CAR | CRSP | Realized abnormal return ±1 day |
+| Surprise | Computed | (Actual - Consensus) / |Consensus| |
+| Beat | Computed | checkmark = beat, x = missed |
+| 3-Day CAR | CRSP | Realized abnormal return +/-1 day |
         """)
-        st.info("Only available for 1,894 tickers in our WRDS dataset. TSLA, JPM, GOOGL, WMT not included — models still run using dataset averages + live yfinance fundamentals.")
+        st.info("Only available for the 1,894 tickers in our WRDS dataset (1990-2024). TSLA, JPM, GOOGL, WMT are not in the dataset — models still run using dataset averages + live yfinance fundamentals.")
 
     with st.expander("🔍 Feature Importance (XGBoost)"):
         st.markdown("""
@@ -1031,62 +873,39 @@ Each feature's **gain score** = avg improvement in log-loss when used in a split
 
 | Rank | Feature | Why it matters |
 |------|---------|----------------|
-| 1 | `beat_streak` | Firms beating 3–4 consecutive quarters keep beating — "sandbagging" guidance |
-| 2 | `prior_surprise` | Analysts under-correct — big beat last Q predicts another |
-| 3 | `avg_surprise_4q` | Sustained beat history = structural expectation management |
+| 1 | `beat_streak` | Firms beating 3-4 consecutive quarters keep beating (sandbagging guidance) |
+| 2 | `prior_surprise` | Analysts under-correct — big beat last Q predicts another beat |
+| 3 | `avg_surprise_4q` | Sustained beat history = structural expectation-management advantage |
 | 4 | `num_analysts` | Heavy coverage = tighter consensus = harder to beat |
-| 5 | `dispersion` | High disagreement = genuine pre-announcement uncertainty |
-| 6–10 | Fundamentals | `log_assets`, `leverage`, `roe`, `prior_car`, `prior_beat` |
+| 5 | `dispersion` | High analyst disagreement = genuine pre-announcement uncertainty |
+| 6-10 | Fundamentals | log_assets, leverage, roe, prior_car, prior_beat — firm quality context |
         """)
 
     with st.expander("📉 EPS Surprise vs 3-Day CAR Scatter"):
         st.markdown("""
-Each dot = one past earnings event · X = EPS surprise · Y = 3-day CAR · 🟢 beat · 🔴 miss
+Each dot = one past earnings event · X = EPS surprise · Y = 3-day CAR · green = beat · red = miss
 
-**Blue star ★** = current prediction overlaid on historical cloud.
+**Blue star** = current prediction overlaid on historical cloud.
 
 | Quadrant | Surprise | CAR | Interpretation |
 |----------|----------|-----|----------------|
-| Top-right ↗ | + | + | Beat + rewarded — normal |
-| Bottom-left ↙ | − | − | Miss + punished — normal |
-| Top-left ↖ | − | + | Miss but rose — bad news already priced in |
-| Bottom-right ↘ | + | − | Beat but fell — "buy the rumor, sell the news" |
-        """)
-
-    with st.expander("📡 News Sentiment (TextBlob)"):
-        st.markdown("""
-- One bar per headline, height = polarity score (−1 to +1)
-- Green = positive (> +0.1) · Yellow = neutral · Red = negative (< −0.1)
-- Summary metrics: avg score, count of positive/neutral/negative headlines
-- Table shows each headline, its label, and its exact polarity score
-- **Avg Score > +0.05** → Bullish signal · **< −0.05** → Bearish signal
-        """)
-
-    with st.expander("🤖 Earnings Tone (FinBERT)"):
-        st.markdown("""
-- Stacked bar = full 100% split between Positive / Neutral / Negative
-- Scores news headlines + first 5 sentences of company business description
-- **Dominant Tone** = whichever of the 3 has the highest average probability
-- **Confidence** = the softmax probability of the dominant label (how sure the model is)
-- Per-sentence table shows individual tone + confidence for each piece of text
-- High confidence (>80%) = trust the label · Low confidence (<50%) = genuinely ambiguous text
+| Top-right | + | + | Beat + rewarded — the normal case |
+| Bottom-left | - | - | Miss + punished — the normal case |
+| Top-left | - | + | Miss but rose — bad news was already priced in |
+| Bottom-right | + | - | Beat but fell — buy the rumor sell the news |
         """)
 
     st.divider()
 
-    # ════════════════════════════════════════════════════════════════════════
-    # SENTIMENT EFFECTS ON CAR
-    # ════════════════════════════════════════════════════════════════════════
-    st.subheader("📰 External Sentiment Effects on CAR")
-    st.markdown("Four documented factors that affect both beat probability and CAR magnitude — and explain why the model's predictions have limits:")
+    # ── SENTIMENT ─────────────────────────────────────────────────────────────
+    st.subheader("📰 Sentiment, News & External Event Effects on CAR")
 
-    ef1, ef2 = st.columns(2)
-    with ef1:
+    se1, se2 = st.columns(2)
+    with se1:
         st.markdown("""
 #### A. 📈 The Expectations Treadmill
-Positive pre-earnings media sentiment → upward analyst revisions → higher consensus.
-Higher consensus = harder beat threshold.
-Stocks sometimes fall on strong earnings because the beat was already priced in.
+Positive pre-earnings media sentiment (30 days before) drives upward analyst revisions.
+Higher consensus = harder beat threshold. Stocks sometimes fall on strong earnings because the beat was already priced in.
 
 > **Model gap:** `dispersion` captures uncertainty but not revision direction.
 
@@ -1098,22 +917,20 @@ Market-model beta removes broad market moves but not idiosyncratic sector shocks
 
 > **Model gap:** CARs on macro event days should be interpreted cautiously.
         """)
-    with ef2:
+    with se2:
         st.markdown("""
 #### C. 🎙️ Management Guidance Tone
-Negative forward guidance + positive EPS beat → often **negative CAR**.
-Miss + strong guidance → often **positive CAR**.
-Investors price the *outlook*, not the past quarter.
+Negative forward guidance + positive EPS beat often produces a **negative CAR**.
+Miss + strong guidance often produces a **positive CAR**.
+Investors price the outlook, not the past quarter.
 
-> **Model gap:** FinBERT currently scores news headlines and company description.
-> Scoring actual earnings call transcripts is the highest-impact next step.
+> **Model gap:** Guidance language not captured. FinBERT transcript scoring = highest-impact extension.
 
 ---
 
 #### D. 📉 Short Interest & IV Crush
 High short interest amplifies positive CARs on beats (short squeeze).
-High pre-earnings IV collapses post-announcement (IV crush) — realized CAR
-smaller than implied move, especially for mega-caps like AAPL.
+High pre-earnings IV collapses post-announcement — realized CAR smaller than implied move (IV crush), especially for mega-caps.
 
 > **Model gap:** `dispersion` proxies uncertainty but not directional positioning.
         """)
@@ -1121,12 +938,13 @@ smaller than implied move, especially for mega-caps like AAPL.
     st.divider()
     with st.expander("🔮 Future Extensions"):
         st.markdown("""
-- **FinBERT on earnings call transcripts** — score actual management guidance language, not just news
-- **Analyst revision momentum** — direction + magnitude of estimate changes 30 days before announcement
-- **Options implied volatility** — IV term structure as pre-announcement uncertainty signal
-- **FINRA short interest** — directional positioning as a CAR amplifier feature
+- **FinBERT guidance tone** — score earnings call transcripts for forward guidance sentiment
+- **Pre-announcement news sentiment** — Alpha Vantage News API or RavenPack 30-day signal
+- **Options implied volatility** — IV term structure as uncertainty and magnitude signal
+- **FINRA short interest** — directional positioning as a CAR amplifier
 - **Fama-French 3-factor CAR** — industry-adjusted benchmark instead of single-factor market model
+- **Analyst revision momentum** — direction of estimate changes in 30 days before announcement
 - **Whisper numbers** — unofficial EPS expectations that often diverge from published consensus
         """)
 
-    st.caption("BA870 / AC820 · Mahesh Wadhokar · Data: WRDS IBES, CRSP, Compustat · Live: yfinance API · Sentiment: TextBlob + FinBERT")
+    st.caption("BA870 / AC820 · Mahesh Wadhokar · Data: WRDS IBES, CRSP, Compustat · Live: yfinance API")
