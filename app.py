@@ -710,7 +710,7 @@ with tab_methodology:
 
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("CRSP–IBES Linked",  "591,466", delta="via htsymbol → oftic")
-    c2.metric("CAR Computed On",   "591,466", delta="parallel processing")
+    c2.metric("CAR Computed On",   "591,466", delta="attempted · many dropped")
     c3.metric("Compustat Match",   "67.5%",   delta="oftic + fiscal year")
     c4.metric("Final Clean Rows",  "52,891",  delta="after dropna all 10 features")
 
@@ -751,15 +751,22 @@ with tab_methodology:
     with ph2b:
         st.markdown("#### 3-Day CAR Computation")
         st.markdown("""
-        For **each of the 591,466 earnings announcements**, the following steps were run:
+        CAR computation was **attempted on all 591,466 linked announcements**. Many returned `NaN` and were later dropped. Reasons for failure:
+
+        - **Insufficient history** — required 200 trading days before the announcement; newly listed stocks failed this check
+        - **Trading gaps** — missing return data in the estimation window due to delistings, halts, or thin trading
+        - **Early dataset years** — 1990–1993 announcements had insufficient prior return history
+        - **Compustat non-match** — 32.5% of rows had no fundamentals and were dropped in a later step
+
+        For each announcement that **passed** all data checks:
 
         1. Retrieved **200 trading days** of stock returns *before* the announcement — the estimation window
         2. Ran **OLS regression**: stock return = α + β × market return (S&P 500)
-        3. Computed the **expected return** for each event day using the estimated α and β
-        4. **Abnormal return** per day = actual return − expected return
-        5. Summed abnormal returns over days **−1, 0, and +1** to get the 3-day CAR
+        3. Computed **expected return** each event day using the estimated α and β
+        4. **Abnormal return** = actual return − expected return per day
+        5. Summed over days **−1, 0, and +1** → 3-day CAR
 
-        Minimum 30 days of valid data required — otherwise returns `NaN` (dropped later).
+        Minimum **30 days** of valid data required in the estimation window — otherwise the row returns `NaN`.
         """)
 
         ca, cb, cc = st.columns(3)
@@ -768,8 +775,14 @@ with tab_methodology:
         cc.metric("Avg CAR Result",    "0.11%",    delta="= 0.0011 raw")
 
         st.markdown("""
-        **Processing:** Run in parallel using `ThreadPoolExecutor` with 4 workers, batch size 2,000.
-        Progress saved to Google Drive every 10,000 rows as a checkpoint.
+        **Why parallel processing (`ThreadPoolExecutor`, 4 workers, batch 2,000)?**
+        591,466 OLS regressions run sequentially would take many hours on Colab.
+        Running 4 simultaneously cuts that time by ~4×.
+
+        **Why save every 10,000 rows to Drive (`ibes_with_car.csv`)?**
+        Google Colab disconnects randomly after ~90 minutes of compute or inactivity.
+        Saving a checkpoint every 10,000 rows means a crash at row 340,000 only loses
+        the last batch — not the entire run. The file was built and extended incrementally.
         """)
 
         st.markdown("#### Feature Engineering — 10 Features")
