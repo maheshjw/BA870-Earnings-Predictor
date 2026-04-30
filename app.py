@@ -635,12 +635,12 @@ with tab_methodology:
 
     # ── SUMMARY ROW ───────────────────────────────────────────────────────────
     o1, o2, o3, o4, o5, o6 = st.columns(6)
-    o1.metric("IBES Rows",       "556,000",    delta="Raw download")
-    o2.metric("CRSP Rows",       "67,500,000", delta="Raw download")
-    o3.metric("Compustat Rows",  "321,000",    delta="Raw download")
-    o4.metric("IBES–CRSP Linked","591,466",    delta="After permno join")
-    o5.metric("Final Dataset",   "52,891",     delta="Clean rows")
-    o6.metric("XGBoost AUC",     "0.713",      delta="Best model")
+    o1.metric("IBES Rows",        "556,000",    delta="Raw download")
+    o2.metric("CRSP Rows",        "67,500,000", delta="Raw download")
+    o3.metric("IBES–CRSP Linked", "591,466",    delta="Step 1 → permno join")
+    o4.metric("Valid CARs",       "110,001",    delta="Step 2 → enough history")
+    o5.metric("Final Dataset",    "52,891",     delta="Step 3 → after all dropna")
+    o6.metric("XGBoost AUC",      "0.713",      delta="Best model")
 
     st.divider()
 
@@ -710,7 +710,7 @@ with tab_methodology:
 
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("CRSP–IBES Linked",  "591,466", delta="via htsymbol → oftic")
-    c2.metric("CAR Computed On",   "591,466", delta="attempted · many dropped")
+    c2.metric("CAR Computed On",   "110,001", delta="had enough CRSP history")
     c3.metric("Compustat Match",   "67.5%",   delta="oftic + fiscal year")
     c4.metric("Final Clean Rows",  "52,891",  delta="after dropna all 10 features")
 
@@ -751,14 +751,15 @@ with tab_methodology:
     with ph2b:
         st.markdown("#### 3-Day CAR Computation")
         st.markdown("""
-        CAR computation was **attempted on all 591,466 linked announcements**. Many returned `NaN` and were later dropped. Reasons for failure:
+        Of the 591,466 IBES announcements linked to CRSP, only **110,001 had enough CRSP return history** to compute a valid CAR.
 
-        - **Insufficient history** — required 200 trading days before the announcement; newly listed stocks failed this check
-        - **Trading gaps** — missing return data in the estimation window due to delistings, halts, or thin trading
-        - **Early dataset years** — 1990–1993 announcements had insufficient prior return history
-        - **Compustat non-match** — 32.5% of rows had no fundamentals and were dropped in a later step
+        **Why only 110,001 out of 591,466?**
+        - The function requires a minimum of **200 trading days** of stock returns before each announcement date
+        - Stocks that were newly listed, had trading halts, delistings, or thin trading failed this check and returned `NaN`
+        - Many early 1990–1993 announcements had no prior return history in CRSP yet
+        - These NaN rows were dropped, reducing 591,466 → 110,001 valid CARs
 
-        For each announcement that **passed** all data checks:
+        For each of the **110,001 valid announcements**:
 
         1. Retrieved **200 trading days** of stock returns *before* the announcement — the estimation window
         2. Ran **OLS regression**: stock return = α + β × market return (S&P 500)
