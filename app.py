@@ -635,12 +635,12 @@ with tab_methodology:
 
     # ── SUMMARY ROW ───────────────────────────────────────────────────────────
     o1, o2, o3, o4, o5, o6 = st.columns(6)
-    o1.metric("IBES Rows",        "556,000",    delta="Raw download")
-    o2.metric("CRSP Rows",        "67,500,000", delta="Raw download")
-    o3.metric("IBES–CRSP Linked", "591,466",    delta="Step 1 → permno join")
-    o4.metric("Valid CARs",       "110,001",    delta="Step 2 → enough history")
-    o5.metric("Final Dataset",    "52,891",     delta="Step 3 → after all dropna")
-    o6.metric("XGBoost AUC",      "0.713",      delta="Best model")
+    o1.metric("Clean IBES Rows",   "556,039",    delta="after fpi=6 + dropna")
+    o2.metric("CRSP Rows",         "67,584,404", delta="filtered to IBES tickers")
+    o3.metric("IBES–CRSP Linked",  "591,466",    delta="via htsymbol → oftic")
+    o4.metric("Valid CARs",        "110,000",    delta="saved to ibes_with_car.csv")
+    o5.metric("Final Dataset",     "52,847",     delta="after all feature dropna")
+    o6.metric("XGBoost AUC",       "0.712",      delta="Best model")
 
     st.divider()
 
@@ -653,7 +653,7 @@ with tab_methodology:
 
     with p1a:
         st.markdown("#### IBES — EPS Estimates")
-        st.metric("Rows Downloaded", "556,000", delta="WRDS IBES Summary 1990–2024")
+        st.metric("Clean IBES Rows", "556,039", delta="after fpi=6 filter + dropna")
         st.markdown("""
         Each row is one consensus EPS estimate for one company for one quarter.
 
@@ -669,7 +669,7 @@ with tab_methodology:
 
     with p1b:
         st.markdown("#### CRSP — Daily Stock Returns")
-        st.metric("Rows Downloaded", "67,500,000", delta="WRDS CRSP Daily 1990–2024")
+        st.metric("Filtered CRSP Rows", "67,584,404", delta="135 chunks × 500K · 6.58 GB RAM")
         st.markdown("""
         Downloaded in 500K-row chunks, filtered to IBES tickers only to reduce the raw 3.4GB file to a manageable size.
 
@@ -684,7 +684,7 @@ with tab_methodology:
 
     with p1c:
         st.markdown("#### Compustat — Firm Fundamentals")
-        st.metric("Rows Downloaded", "321,000", delta="WRDS Compustat Annual")
+        st.metric("Compustat Rows", "321,141", delta="industrial firms · assets > 0")
         st.markdown("""
         Filtered to industrial firms, standard format, consolidated statements, and total assets > 0.
 
@@ -736,8 +736,8 @@ with tab_methodology:
         **Result: 591,466 IBES announcements successfully linked to CRSP permnos**
         """)
         la, lb = st.columns(2)
-        la.metric("Rows Linked", "591,466")
-        lb.metric("Join key", "oftic → htsymbol")
+        la.metric("Header Rows", "30,806")
+        lb.metric("Linked", "591,466", delta="oftic → htsymbol")
 
         st.markdown("#### Compustat Merge")
         st.markdown("""
@@ -745,8 +745,8 @@ with tab_methodology:
         Unmatched rows (~32.5%) were dropped — these become the `dropna` rows in the final step.
         """)
         ma, mb = st.columns(2)
-        ma.metric("Match Rate", "67.5%")
-        mb.metric("Unmatched", "→ dropped")
+        ma.metric("Matched Rows", "74,273 / 110,065", delta="67.5% match rate")
+        mb.metric("Unmatched", "35,792 rows → dropped")
 
     with ph2b:
         st.markdown("#### 3-Day CAR Computation")
@@ -776,14 +776,16 @@ with tab_methodology:
         cc.metric("Avg CAR Result",    "0.11%",    delta="= 0.0011 raw")
 
         st.markdown("""
-        **Why parallel processing (`ThreadPoolExecutor`, 4 workers, batch 2,000)?**
-        591,466 OLS regressions run sequentially would take many hours on Colab.
-        Running 4 simultaneously cuts that time by ~4×.
+        **Why `ThreadPoolExecutor` with 4 workers and batch size 2,000?**
+        591,466 OLS regressions run one-by-one would take many hours on Colab free tier.
+        Running 4 in parallel cuts the time by ~4×. Each batch of 2,000 rows is dispatched,
+        completed, and added to the results list before the next batch starts.
 
-        **Why save every 10,000 rows to Drive (`ibes_with_car.csv`)?**
-        Google Colab disconnects randomly after ~90 minutes of compute or inactivity.
-        Saving a checkpoint every 10,000 rows means a crash at row 340,000 only loses
-        the last batch — not the entire run. The file was built and extended incrementally.
+        **Why save to Drive every 10,000 rows?**
+        Google Colab disconnects randomly — typically after 90 minutes of compute time
+        or if the browser tab goes idle. Without checkpointing, a disconnect at row 340,000
+        would lose all that work. Saving `ibes_with_car.csv` every 10,000 rows means only
+        the last batch is lost — the rest is safe on Drive and can be reloaded to continue.
         """)
 
         st.markdown("#### Feature Engineering — 10 Features")
@@ -810,9 +812,9 @@ with tab_methodology:
         st.dataframe(feat_df, use_container_width=True, hide_index=True)
 
         fd1, fd2, fd3 = st.columns(3)
-        fd1.metric("Final Rows", "52,891")
+        fd1.metric("Final Rows", "52,847")
         fd2.metric("Tickers",    "1,894")
-        fd3.metric("Period",     "1990–2024")
+        fd3.metric("Beat Rate",  "66.0%", delta="Avg CAR: +0.10%")
 
     st.divider()
 
@@ -823,8 +825,8 @@ with tab_methodology:
 
     st.markdown("#### Train / Test Split — time-based to prevent look-ahead bias")
     sp1, sp2, sp3 = st.columns(3)
-    sp1.metric("Train Set",  "33,121 rows", delta="before 2019-01-01")
-    sp2.metric("Test Set",   "19,770 rows", delta="2019-01-01 onwards")
+    sp1.metric("Train Set",  "33,077 rows", delta="anndats_act < 2019-01-01")
+    sp2.metric("Test Set",   "19,770 rows", delta="anndats_act >= 2019-01-01")
     sp3.metric("Split Type", "Temporal",    delta="No future data in train ✓")
 
     st.markdown("")
@@ -836,7 +838,7 @@ with tab_methodology:
         cl1.metric("LR Accuracy",  "68.5%")
         cl2.metric("LR AUC",       "0.701")
         cl3.metric("XGB Accuracy", "68.4%")
-        cl4.metric("XGB AUC",      "0.713", delta="Primary ✓")
+        cl4.metric("XGB AUC",      "0.712", delta="Primary ✓")
         st.markdown("""
         **Logistic Regression** — L2-regularised, trained on scaled features. Interpretable baseline.
 
@@ -851,7 +853,7 @@ with tab_methodology:
         st.markdown("#### Regression — Predict 3-Day CAR")
         rg1, rg2 = st.columns(2)
         rg1.metric("OLS RMSE",           "0.1179")
-        rg2.metric("Random Forest RMSE", "0.1180")
+        rg2.metric("Random Forest RMSE", "0.1181")
         st.markdown("""
         **OLS** — Linear regression on scaled features. Interpretable benchmark.
 
@@ -964,7 +966,7 @@ with tab_methodology:
         """)
         cv1, cv2, cv3 = st.columns(3)
         cv1.metric("Estimation Window", "200 days")
-        cv2.metric("Avg CAR",           "+0.11%", delta="from 591K events")
+        cv2.metric("Avg CAR",           "+0.10%", delta="0.0010 from 110K events")
         cv3.metric("CAR Std Dev",        "~11.8%", delta="wide outcome range")
         st.info(
             "Predicted CARs are small (often < 1%) because the model predicts the "
